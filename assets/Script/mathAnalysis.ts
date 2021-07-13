@@ -9,13 +9,15 @@
 
 //使用堆栈解析一般数学公式。
 const str = "(30+20-5)/5-10*-3";
-// operator 是操作符，value是权重,权重越大，优先级越高。
-const operatorList: Array<{
+
+interface OperatorItem {
     operator: string;
     value: number;
     name: string;
     func: Function;
-}> = [
+}
+// operator 是操作符，value是权重,权重越大，优先级越高。
+const operatorList: Array<OperatorItem> = [
     {
         operator: "+",
         value: 0,
@@ -127,16 +129,21 @@ class MathAnalysis {
         } while (i < subject.length);
         return infixArr;
     }
+
+    private getOperatorInfo(operator: string): OperatorItem {
+        return operatorList.filter((item) => item.operator === operator)[0];
+    }
+
+    //获取后缀表达式数组
     getSuffixArr(subject: string) {
-        const infixArr = this.getInfixArr(subject);
+        const infixArr = this.getInfixArr(subject); //获取中缀表达式数组
         //定义两个栈
         let operator = []; //符号栈
         let suffixArr = []; //后缀表达式栈
-        let priority = () => 100;
         //遍历infixArr
         for (let item of infixArr) {
             //如果是一个数，加入suffixArr
-            if (item.match(/\d+/)) {
+            if (!isNaN(Number(item))) {
                 suffixArr.push(item);
             } else if (item === "(") {
                 operator.push(item);
@@ -152,9 +159,13 @@ class MathAnalysis {
                 operator.pop(); //将(符号弹出栈，消除小括号
             } else {
                 //将s1栈顶的运算符弹出并压入到suffixArr中，再次转到(4.1)与operator中新的栈顶运算符相比较
+                const top =
+                    operator.length > 0 ? operator[operator.length - 1] : null;
+                const topLv =
+                    operator.length > 0 ? this.getOperatorInfo(top).value : -1;
                 while (
-                    operator.length > 0 //&&
-                    // priority(operator[operator.length - 1]) >= priority(item)
+                    operator.length > 0 &&
+                    topLv < this.getOperatorInfo(item).value
                 ) {
                     suffixArr.push(operator.pop());
                 }
@@ -171,5 +182,5 @@ class MathAnalysis {
 }
 
 const tester = new MathAnalysis();
-const ret = tester.getInfixArr("-100*0.01-99/3*1.35");
+const ret = tester.getSuffixArr("-100*0.01-99/3*1.35");
 console.log(ret);
